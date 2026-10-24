@@ -1,0 +1,168 @@
+{
+  "grid": [
+    {
+      "max_depth": 2,
+      "min_samples_leaf": 1,
+      "train_acc": 0.075,
+      "val_acc": 0.0625,
+      "test_acc": 0.075,
+      "n_leaves": 3,
+      "mean_samples_per_leaf": 80.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 2,
+      "min_samples_leaf": 2,
+      "train_acc": 0.075,
+      "val_acc": 0.0625,
+      "test_acc": 0.075,
+      "n_leaves": 3,
+      "mean_samples_per_leaf": 80.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 2,
+      "min_samples_leaf": 4,
+      "train_acc": 0.075,
+      "val_acc": 0.0625,
+      "test_acc": 0.075,
+      "n_leaves": 3,
+      "mean_samples_per_leaf": 80.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 4,
+      "min_samples_leaf": 1,
+      "train_acc": 0.125,
+      "val_acc": 0.0875,
+      "test_acc": 0.0875,
+      "n_leaves": 5,
+      "mean_samples_per_leaf": 48.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 4,
+      "min_samples_leaf": 2,
+      "train_acc": 0.125,
+      "val_acc": 0.0875,
+      "test_acc": 0.0875,
+      "n_leaves": 5,
+      "mean_samples_per_leaf": 48.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 4,
+      "min_samples_leaf": 4,
+      "train_acc": 0.125,
+      "val_acc": 0.0875,
+      "test_acc": 0.0875,
+      "n_leaves": 5,
+      "mean_samples_per_leaf": 48.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 8,
+      "min_samples_leaf": 1,
+      "train_acc": 0.25,
+      "val_acc": 0.15,
+      "test_acc": 0.1875,
+      "n_leaves": 10,
+      "mean_samples_per_leaf": 24.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 8,
+      "min_samples_leaf": 2,
+      "train_acc": 0.25,
+      "val_acc": 0.15,
+      "test_acc": 0.1875,
+      "n_leaves": 10,
+      "mean_samples_per_leaf": 24.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 8,
+      "min_samples_leaf": 4,
+      "train_acc": 0.25,
+      "val_acc": 0.15,
+      "test_acc": 0.1875,
+      "n_leaves": 10,
+      "mean_samples_per_leaf": 24.0,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 16,
+      "min_samples_leaf": 1,
+      "train_acc": 0.4708333333333333,
+      "val_acc": 0.25,
+      "test_acc": 0.4,
+      "n_leaves": 19,
+      "mean_samples_per_leaf": 12.631578947368421,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 16,
+      "min_samples_leaf": 2,
+      "train_acc": 0.4708333333333333,
+      "val_acc": 0.25,
+      "test_acc": 0.4,
+      "n_leaves": 19,
+      "mean_samples_per_leaf": 12.631578947368421,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": 16,
+      "min_samples_leaf": 4,
+      "train_acc": 0.4708333333333333,
+      "val_acc": 0.25,
+      "test_acc": 0.4,
+      "n_leaves": 19,
+      "mean_samples_per_leaf": 12.631578947368421,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": null,
+      "min_samples_leaf": 1,
+      "train_acc": 1.0,
+      "val_acc": 0.4125,
+      "test_acc": 0.6375,
+      "n_leaves": 45,
+      "mean_samples_per_leaf": 5.333333333333333,
+      "frac_single_example_leaves": 0.1111111111111111
+    },
+    {
+      "max_depth": null,
+      "min_samples_leaf": 2,
+      "train_acc": 0.9833333333333333,
+      "val_acc": 0.4125,
+      "test_acc": 0.6,
+      "n_leaves": 44,
+      "mean_samples_per_leaf": 5.454545454545454,
+      "frac_single_example_leaves": 0.0
+    },
+    {
+      "max_depth": null,
+      "min_samples_leaf": 4,
+      "train_acc": 0.9791666666666666,
+      "val_acc": 0.4125,
+      "test_acc": 0.6,
+      "n_leaves": 40,
+      "mean_samples_per_leaf": 6.0,
+      "frac_single_example_leaves": 0.0
+    }
+  ],
+  "selected": {
+    "max_depth": null,
+    "min_samples_leaf": 4,
+    "train_acc": 0.9791666666666666,
+    "val_acc": 0.4125,
+    "test_acc": 0.6,
+    "n_leaves": 40,
+    "mean_samples_per_leaf": 6.0,
+    "frac_single_example_leaves": 0.0
+  },
+  "frozen_params": {
+    "max_depth": null,
+    "min_samples_leaf": 4
+  }
+}

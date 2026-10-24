@@ -1,0 +1,20 @@
+{
+  "single_tree": {
+    "clean_acc": 0.6,
+    "masked_acc": 0.4,
+    "bias2": 0.4138333333333334,
+    "variance": 0.5986666666666668
+  },
+  "bagging": {
+    "clean_acc": 0.85,
+    "masked_acc": 0.7,
+    "bias2": 0.5239669972222222,
+    "variance": 0.025896919444444444
+  },
+  "boosting": {
+    "clean_acc": 0.3625,
+    "masked_acc": 0.25,
+    "bias2": 0.8823981673191534,
+    "variance": 0.02230463714726349
+  }
+}

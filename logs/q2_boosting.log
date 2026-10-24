@@ -1,0 +1,60 @@
+
+===== q2_boosting | run start 2026-10-24 13:04:00 =====
+Q2 | seed 260004
+======================================================================
+Q2(a)  one complete SAMME round on a 3-class / 9-sample toy
+======================================================================
+   i    x  y    w_init pred    ok w_updated
+   0    1  0  0.111111    0  True  0.066667
+   1    2  0  0.111111    0  True  0.066667
+   6    3  2  0.111111    1 False  0.166667
+   3    5  1  0.111111    1  True  0.066667
+   4    6  1  0.111111    1  True  0.066667
+   5    7  1  0.111111    1  True  0.066667
+   2   12  0  0.111111    1 False  0.166667
+   7   14  2  0.111111    1 False  0.166667
+   8   15  2  0.111111    1 False  0.166667
+  stump: split x <= 2.5  eps_1 = 0.444444  alpha_1 = 0.916291  (check: log((1-eps)/eps)+log(2) = 0.916291)
+  misclassified mass after update: 0.666667, correct mass 0.333333
+======================================================================
+Q2(b)  boosting grid (depth x rounds), validation-only selection
+======================================================================
+  depth 1: stop reason 'completed', 100 learners kept, eps range [0.894, 0.950]
+    t= 10 | train 0.0500  val 0.0375  test 0.0500 (0.9s)
+    t= 25 | train 0.0917  val 0.0750  test 0.0750 (2.1s)
+    t= 50 | train 0.1833  val 0.1000  test 0.1000 (4.2s)
+    t=100 | train 0.1458  val 0.1000  test 0.1500 (8.4s)
+  depth 2: stop reason 'completed', 100 learners kept, eps range [0.699, 0.925]
+    t= 10 | train 0.1333  val 0.0750  test 0.0750 (1.6s)
+    t= 25 | train 0.2083  val 0.1125  test 0.1000 (4.1s)
+    t= 50 | train 0.3000  val 0.1500  test 0.1375 (8.2s)
+    t=100 | train 0.4250  val 0.1875  test 0.2000 (16.5s)
+  depth 3: stop reason 'completed', 100 learners kept, eps range [0.547, 0.900]
+    t= 10 | train 0.2750  val 0.1625  test 0.1500 (2.4s)
+    t= 25 | train 0.3458  val 0.1750  test 0.1750 (6.0s)
+    t= 50 | train 0.5458  val 0.2375  test 0.2625 (12.0s)
+    t=100 | train 0.6375  val 0.2500  test 0.2125 (24.1s)
+  depth 4: stop reason 'completed', 100 learners kept, eps range [0.447, 0.875]
+    t= 10 | train 0.3833  val 0.2250  test 0.2375 (3.2s)
+    t= 25 | train 0.7458  val 0.3250  test 0.3000 (8.0s)
+    t= 50 | train 0.9750  val 0.3875  test 0.3625 (16.0s)
+    t=100 | train 0.7417  val 0.3375  test 0.2125 (31.9s)
+  SELECTED: depth 4, 50 rounds (val 0.3875, test 0.3625)
+======================================================================
+Q2(c)  boosting vs bagging (25/50/100 learners) + heavy face
+======================================================================
+  L= 25 | boost train 0.7458 val 0.3250 test 0.3000 (8.0s) | bagging test 0.8000 (24.6s)
+  L= 50 | boost train 0.9750 val 0.3875 test 0.3625 (16.0s) | bagging test 0.8125 (48.1s)
+  L=100 | boost train 0.7417 val 0.3375 test 0.2125 (31.9s) | bagging test 0.8500 (97.4s)
+  heaviest face: image 355 (identity 35), final weight 0.0526 = 12.6x initial, correct in 12/100 rounds
+======================================================================
+Q2(d)  tree vs bagging vs boosting on clean/masked test sets
+======================================================================
+  CLEAN : tree 0.6000 | bagging 0.8500 | boosting 0.3625
+  MASKED: tree 0.4000 | bagging 0.7000 | boosting 0.2500
+  refitting the 100-tree bagged ensemble for the case study ...
+  case: test image 7 (true 0) [bagging_stays_correct_boosting_flips]
+    bagging votes for true class: 49/100 -> 36/100   boosting q_true: 0.131 -> 0.111
+    splits inside the masked block: bagging 0.055, boosting 0.056
+  drawing Q2 figures ...
+Q2 done.

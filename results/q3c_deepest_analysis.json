@@ -1,0 +1,43 @@
+{
+  "measurements": [
+    {
+      "max_depth": 4,
+      "role": "shallow",
+      "single_orig": 0.0875,
+      "bagged_orig": 0.35,
+      "gain_orig_pp": 26.249999999999996,
+      "gain_resamples_pp": 21.083333333333332,
+      "n_leaves": 5,
+      "mean_samples_per_leaf": 48.0,
+      "disagreement_mean": 0.9484632154882154,
+      "tree_var": 0.05247832579599367,
+      "var_removed_frac": 0.7461287362580843
+    },
+    {
+      "max_depth": null,
+      "role": "selected",
+      "single_orig": 0.6,
+      "bagged_orig": 0.85,
+      "gain_orig_pp": 25.0,
+      "gain_resamples_pp": 25.291666666666657,
+      "n_leaves": 40,
+      "mean_samples_per_leaf": 6.0,
+      "disagreement_mean": 0.8239758417508418,
+      "tree_var": 0.5986666666666668,
+      "var_removed_frac": 0.9567423394580551
+    },
+    {
+      "max_depth": 16,
+      "role": "deeper",
+      "single_orig": 0.4,
+      "bagged_orig": 0.7625,
+      "gain_orig_pp": 36.24999999999999,
+      "gain_resamples_pp": 35.0,
+      "n_leaves": 19,
+      "mean_samples_per_leaf": 12.631578947368421,
+      "disagreement_mean": 0.8890363636363635,
+      "tree_var": 0.2303296817770635,
+      "var_removed_frac": 0.9065635211302256
+    }
+  ]
+}

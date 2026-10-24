@@ -1,0 +1,41 @@
+{
+  "student_name": "Devinder",
+  "roll_number": "P26AI0004",
+  "seed": 260004,
+  "seed_note": "all numeric characters of the roll number, in order: P26AI0004 -> 260004 (numpy.random.default_rng)",
+
+  "split": {
+    "per_identity": { "train": 6, "val": 2, "test": 2 },
+    "how": "for each identity c = 0..39: perm = rng.permutation(identity indices); train = perm[:6], val = perm[6:8], test = perm[8:10]"
+  },
+
+  "masked_block": { "rows": [24, 40], "cols": [24, 40] },
+
+  "tree_grid": {
+    "max_depth": [2, 4, 8, 16, null],
+    "min_samples_leaf": [1, 2, 4],
+    "selection": "highest validation accuracy; ties -> smaller max_depth (None counts as deepest), then larger min_samples_leaf"
+  },
+
+  "bagging": {
+    "B_values": [1, 5, 10, 25, 50, 100, 200],
+    "n_max": 200,
+    "bootstrap": "one default_rng(seed) call: rng.integers(0, 240, size=(200, 240)); the size-B ensemble is the first B trees"
+  },
+
+  "boosting": {
+    "depths": [1, 2, 3, 4],
+    "rounds": [10, 25, 50, 100],
+    "max_rounds": 100,
+    "weak_learner": "DecisionTreeClassifier(max_depth=d, min_samples_leaf=1)",
+    "selection": "highest clean validation accuracy; ties -> fewer rounds, then shallower depth"
+  },
+
+  "q3": {
+    "n_repetitions": 30,
+    "bag_size": 100,
+    "depths": { "shallow": 4, "selected": null, "deeper": 16 },
+    "n_jobs": 2,
+    "resample": "fresh default_rng(seed): g = rng.integers(0, 6, size=(30, 40, 6)); per-repetition bagging bootstraps use default_rng([seed, r])"
+  }
+}

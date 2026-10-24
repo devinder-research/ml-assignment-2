@@ -1,0 +1,94 @@
+
+===== q3_bias_variance | run start 2026-10-24 13:07:05 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 30/30
+
+===== q3_bias_variance | run start 2026-10-24 13:08:50 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 30/30
+  rep 0 done (272s elapsed, boost rounds 50, completed)
+  rep 1 done (272s elapsed, boost rounds 50, completed)
+  rep 2 done (538s elapsed, boost rounds 50, completed)
+  rep 3 done (538s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 13:18:41 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 26/30
+  rep 4 done (273s elapsed, boost rounds 50, completed)
+  rep 5 done (273s elapsed, boost rounds 50, completed)
+  rep 6 done (543s elapsed, boost rounds 50, completed)
+  rep 7 done (543s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 13:28:40 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 22/30
+  rep 8 done (271s elapsed, boost rounds 50, completed)
+  rep 9 done (271s elapsed, boost rounds 50, completed)
+  rep 10 done (544s elapsed, boost rounds 50, completed)
+  rep 11 done (544s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 13:38:30 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 18/30
+  rep 12 done (274s elapsed, boost rounds 50, completed)
+  rep 13 done (274s elapsed, boost rounds 50, completed)
+  rep 14 done (546s elapsed, boost rounds 50, completed)
+  rep 15 done (546s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 13:48:19 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 14/30
+  rep 16 done (275s elapsed, boost rounds 50, completed)
+  rep 17 done (275s elapsed, boost rounds 50, completed)
+  rep 18 done (542s elapsed, boost rounds 50, completed)
+  rep 19 done (542s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 13:58:08 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 10/30
+  rep 20 done (274s elapsed, boost rounds 50, completed)
+  rep 21 done (274s elapsed, boost rounds 50, completed)
+  rep 22 done (547s elapsed, boost rounds 50, completed)
+  rep 23 done (547s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 14:07:57 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 6/30
+  rep 24 done (273s elapsed, boost rounds 50, completed)
+  rep 25 done (273s elapsed, boost rounds 50, completed)
+  rep 26 done (543s elapsed, boost rounds 50, completed)
+  rep 27 done (543s elapsed, boost rounds 50, completed)
+
+===== q3_bias_variance | run start 2026-10-24 14:17:47 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds
+repetitions to run: 2/30
+  rep 28 done (277s elapsed, boost rounds 50, completed)
+  rep 29 done (277s elapsed, boost rounds 50, completed)
+Q3(a)  model | bias^2 | variance | test acc over the 30 refits
+  tree      | 0.4138 | 0.5987 | 0.4938 +- 0.0475
+  bagging   | 0.5240 | 0.0259 | 0.7467 +- 0.0390
+  boosting  | 0.8824 | 0.0223 | 0.2838 +- 0.1014
+Q3(b)  depth | tree b2/var/acc | bagged b2/var/acc | var removed
+      4 (shallow ) | 0.9022/0.0525/0.0679 | 0.8902/0.0133/0.2787 | -75%
+   None (selected) | 0.4138/0.5987/0.4938 | 0.5240/0.0259/0.7467 | -96%
+     16 (deeper  ) | 0.6717/0.2303/0.2746 | 0.6702/0.0215/0.6246 | -91%
+  (original-split bagging at depth 4: 0.3500)
+  (original-split bagging at depth 16: 0.7625)
+Q3(c)  depth | single -> bagged (original split) | gain
+      4 | 0.0875 -> 0.3500 | +26.2 pp (+21.1 pp over the refits)
+   None | 0.6000 -> 0.8500 | +25.0 pp (+25.3 pp over the refits)
+     16 | 0.4000 -> 0.7625 | +36.2 pp (+35.0 pp over the refits)
+Q3(d)  model | clean | masked | bias^2 | variance
+  single_tree  | 0.6000 | 0.4000 | 0.4138 | 0.5987
+  bagging      | 0.8500 | 0.7000 | 0.5240 | 0.0259
+  boosting     | 0.3625 | 0.2500 | 0.8824 | 0.0223
+Q3 done.
