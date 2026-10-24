@@ -44,3 +44,49 @@ Q1(d)  frozen tree vs bagging (B*=100) on clean/masked test
   both wrong: img 49 true=4 tree -> 39 (p=1.00) | bagging -> 0  votes true 6/100
   drawing Q1 figures ...
 Q1 done.
+
+===== q1_tree_bagging | run start 2026-10-24 14:30:55 =====
+Q1 | seed 260004
+======================================================================
+Q1(a)  decision tree grid, validation-only selection
+======================================================================
+  depth=   2 msl=1 | train 0.0750  val 0.0625  test 0.0750 | leaves   3  mean/leaf  80.00  1-sample-leaf frac 0.000
+  depth=   2 msl=2 | train 0.0750  val 0.0625  test 0.0750 | leaves   3  mean/leaf  80.00  1-sample-leaf frac 0.000
+  depth=   2 msl=4 | train 0.0750  val 0.0625  test 0.0750 | leaves   3  mean/leaf  80.00  1-sample-leaf frac 0.000
+  depth=   4 msl=1 | train 0.1250  val 0.0875  test 0.0875 | leaves   5  mean/leaf  48.00  1-sample-leaf frac 0.000
+  depth=   4 msl=2 | train 0.1250  val 0.0875  test 0.0875 | leaves   5  mean/leaf  48.00  1-sample-leaf frac 0.000
+  depth=   4 msl=4 | train 0.1250  val 0.0875  test 0.0875 | leaves   5  mean/leaf  48.00  1-sample-leaf frac 0.000
+  depth=   8 msl=1 | train 0.2500  val 0.1500  test 0.1875 | leaves  10  mean/leaf  24.00  1-sample-leaf frac 0.000
+  depth=   8 msl=2 | train 0.2500  val 0.1500  test 0.1875 | leaves  10  mean/leaf  24.00  1-sample-leaf frac 0.000
+  depth=   8 msl=4 | train 0.2500  val 0.1500  test 0.1875 | leaves  10  mean/leaf  24.00  1-sample-leaf frac 0.000
+  depth=  16 msl=1 | train 0.4708  val 0.2500  test 0.4000 | leaves  19  mean/leaf  12.63  1-sample-leaf frac 0.000
+  depth=  16 msl=2 | train 0.4708  val 0.2500  test 0.4000 | leaves  19  mean/leaf  12.63  1-sample-leaf frac 0.000
+  depth=  16 msl=4 | train 0.4708  val 0.2500  test 0.4000 | leaves  19  mean/leaf  12.63  1-sample-leaf frac 0.000
+  depth=None msl=1 | train 1.0000  val 0.4125  test 0.6375 | leaves  45  mean/leaf   5.33  1-sample-leaf frac 0.111
+  depth=None msl=2 | train 0.9833  val 0.4125  test 0.6000 | leaves  44  mean/leaf   5.45  1-sample-leaf frac 0.000
+  depth=None msl=4 | train 0.9792  val 0.4125  test 0.6000 | leaves  40  mean/leaf   6.00  1-sample-leaf frac 0.000
+  FROZEN: max_depth=None, min_samples_leaf=4 (val 0.4125)
+======================================================================
+Q1(b)+Q1(c)  bagging from scratch, B sweep with OOB diagnostics
+======================================================================
+  fitting the seeded 200-tree ensemble (default_rng(260004).integers(0, 240, (200, 240))) ...
+  done in 193.9s
+  B=  1 | train 0.6750  val 0.3625  test 0.3250 | distinct 150.00 (theory 151.89) | OOB 0.3111 (cov 0.375)  dis None  margin 1.0000
+  B=  5 | train 0.9375  val 0.5125  test 0.5250 | distinct 150.60 (theory 151.89) | OOB 0.3122 (cov 0.921)  dis 0.78  margin 0.2625
+  B= 10 | train 0.9792  val 0.6000  test 0.6375 | distinct 152.00 (theory 151.89) | OOB 0.3697 (cov 0.992)  dis 0.8  margin 0.2313
+  B= 25 | train 1.0000  val 0.7625  test 0.8000 | distinct 153.96 (theory 151.89) | OOB 0.5833 (cov 1.000)  dis 0.784875  margin 0.2625
+  B= 50 | train 1.0000  val 0.7625  test 0.8125 | distinct 153.20 (theory 151.89) | OOB 0.6542 (cov 1.000)  dis 0.8073265306122449  margin 0.2470
+  B=100 | train 1.0000  val 0.8500  test 0.8500 | distinct 152.14 (theory 151.89) | OOB 0.7583 (cov 1.000)  dis 0.8012449494949495  margin 0.2624
+  B=200 | train 1.0000  val 0.8375  test 0.8625 | distinct 151.90 (theory 151.89) | OOB 0.7542 (cov 1.000)  dis 0.8007920854271356  margin 0.2644
+  FINAL B* = 100 (highest validation accuracy, ties -> smallest B)
+======================================================================
+Q1(d)  frozen tree vs bagging (B*=100) on clean/masked test
+======================================================================
+  CLEAN : tree 0.6000 (conf 0.983) | bagging 0.8500 (conf 0.379)
+  MASKED: tree 0.4000 (conf 0.996) | bagging 0.7000 (conf 0.302)
+  corrects: img 7 true=0 tree -> 16 (p=1.00) | bagging -> 0  votes true 49/100
+  corrects: img 0 true=0 tree -> 7 (p=1.00) | bagging -> 0  votes true 54/100
+  both wrong: img 13 true=1 tree -> 9 (p=1.00) | bagging -> 26  votes true 14/100
+  both wrong: img 49 true=4 tree -> 39 (p=1.00) | bagging -> 0  votes true 6/100
+  drawing Q1 figures ...
+Q1 done.

@@ -215,8 +215,8 @@ def make_figures(X, y, split, b, c, d, final_B, logp):
     logp("  drawing Q1 figures ...")
 
     # --- dataset / protocol figure -----------------------------------------
-    fig = plt.figure(figsize=(7.0, 2.9), constrained_layout=True)
-    gs = fig.add_gridspec(2, 10, height_ratios=[1.25, 1.35])
+    fig = plt.figure(figsize=(7.0, 2.35), constrained_layout=True)
+    gs = fig.add_gridspec(2, 10, height_ratios=[1.0, 1.15])
     id0 = np.flatnonzero(y == 0)
     # colour each of identity 0's images by its role in the saved split
     role = {}
@@ -256,8 +256,7 @@ def make_figures(X, y, split, b, c, d, final_B, logp):
 
     # --- B sweep -------------------------------------------------------------
     Bs = [r["B"] for r in b["sweep"]]
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.4), constrained_layout=True)
-    ax = axes[0]
+    fig, ax = plt.subplots(figsize=(3.4, 2.5), constrained_layout=True)
     for key, lab in (("train_acc", "train"), ("val_acc", "validation"),
                      ("test_acc", "test")):
         ax.plot(Bs, [r[key] for r in b["sweep"]], "o-", ms=3, label=lab)
@@ -266,16 +265,7 @@ def make_figures(X, y, split, b, c, d, final_B, logp):
     ax.set_xscale("log")
     ax.set_xlabel("ensemble size B")
     ax.set_ylabel("accuracy")
-    ax.legend(fontsize=7, frameon=False)
-    ax = axes[1]
-    ax.plot(Bs, [r["avg_distinct"] for r in b["sweep"]], "o-", ms=3,
-            label="measured")
-    ax.axhline(b["sweep"][0]["theory_distinct"], ls="--", c="gray",
-               label=f"theory {b['sweep'][0]['theory_distinct']:.2f}")
-    ax.set_xscale("log")
-    ax.set_xlabel("ensemble size B")
-    ax.set_ylabel("distinct examples per bootstrap")
-    ax.legend(fontsize=7, frameon=False)
+    ax.legend(fontsize=7, frameon=False, loc="lower right")
     fig.savefig(FIG / "fig_q1_sweep.png", dpi=200)
     fig.savefig(FIG / "fig_q1_sweep.pdf")
     plt.close(fig)
@@ -303,9 +293,9 @@ def make_figures(X, y, split, b, c, d, final_B, logp):
     # --- case studies ---------------------------------------------------------
     cases = d["cases"]["bagging_corrects_tree"] + d["cases"]["both_wrong"]
     tags = ["corrected", "corrected", "both wrong", "both wrong"]
-    fig, axes = plt.subplots(2, 4, figsize=(7.0, 2.9),
+    fig, axes = plt.subplots(2, 4, figsize=(7.0, 2.55),
                              constrained_layout=True,
-                             gridspec_kw={"height_ratios": [2.4, 1]})
+                             gridspec_kw={"height_ratios": [2.1, 1]})
     votes = d["votes"]
     for j, (cs, tag) in enumerate(zip(cases, tags)):
         ax = axes[0, j]
@@ -317,13 +307,12 @@ def make_figures(X, y, split, b, c, d, final_B, logp):
         txt.axis("off")
         vt = cs["votes_true"]
         top_k = max(cs["votes_top"], key=cs["votes_top"].get)
-        txt.text(0, 0.80, f"true {cs['true']} | tree -> {cs['tree_pred']}"
-                          f" (p={cs['tree_conf']:.2f})", fontsize=6.5)
-        txt.text(0, 0.55, f"bagging -> {cs['bagging_pred']}", fontsize=6.5)
-        txt.text(0, 0.30, f"votes true {vt:.0f}/{final_B}", fontsize=6.5)
-        txt.text(0, 0.05, f"top: id {top_k} "
-                          f"{cs['votes_top'][top_k]:.0f}/{final_B}",
-                 fontsize=6.5)
+        txt.text(0, 0.78, f"true {cs['true']} | tree -> {cs['tree_pred']}"
+                          f" (p={cs['tree_conf']:.2f})", fontsize=6.3)
+        txt.text(0, 0.55, f"bagging -> {cs['bagging_pred']}", fontsize=6.3)
+        txt.text(0, 0.32, f"votes true {vt:.0f}/{final_B} | top: "
+                          f"id {top_k} {cs['votes_top'][top_k]:.0f}",
+                 fontsize=6.3)
     fig.savefig(FIG / "fig_q1_cases.png", dpi=200)
     fig.savefig(FIG / "fig_q1_cases.pdf")
     plt.close(fig)
