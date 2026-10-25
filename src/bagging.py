@@ -20,6 +20,53 @@ from sklearn.tree import DecisionTreeClassifier
 from data import N_CLASSES, SEED, pairwise_disagreement, vote_fractions
 
 
+def _validate_training_data(X, y, n_classes):
+    """Shared input validation for fit() (clear ValueError messages)."""
+    X, y = np.asarray(X), np.asarray(y)
+    if X.ndim != 2:
+        raise ValueError(f"X must be 2-dimensional (n_samples, n_features), "
+                         f"got shape {X.shape}")
+    if y.ndim != 1:
+        raise ValueError(f"y must be 1-dimensional, got shape {y.shape}")
+    n = X.shape[0]
+    if n == 0:
+        raise ValueError("empty dataset: X has no samples")
+    if X.shape[1] == 0:
+        raise ValueError("empty dataset: X has no features")
+    if y.shape[0] != n:
+        raise ValueError(f"X and y have mismatched sample counts: "
+                         f"X has {n}, y has {y.shape[0]}")
+    if not np.issubdtype(y.dtype, np.number):
+        raise ValueError(f"y must contain numeric class labels, got dtype "
+                         f"{y.dtype}")
+    y_int = y.astype(int)
+    if not np.array_equal(y_int, y):
+        raise ValueError("y must contain integer class labels")
+    if y_int.min() < 0 or y_int.max() >= n_classes:
+        raise ValueError(f"invalid class labels: labels must be integers in "
+                         f"[0, {n_classes}), got range "
+                         f"[{y_int.min()}, {y_int.max()}]")
+    return X, y_int
+
+
+def _validate_bootstrap_indices(bootstrap_indices, n_estimators, n):
+    """Validate externally supplied bootstrap indices: shape (B, n),
+    integer dtype, values in [0, n). Repeated indices are allowed and
+    expected (sampling with replacement)."""
+    idx = np.asarray(bootstrap_indices)
+    if idx.ndim != 2 or idx.shape != (n_estimators, n):
+        raise ValueError(f"bootstrap_indices must have shape "
+                         f"({n_estimators}, {n}) = (n_estimators, n_samples), "
+                         f"got {idx.shape}")
+    if not np.issubdtype(idx.dtype, np.integer):
+        raise ValueError(f"bootstrap_indices must be integer-valued, got "
+                         f"dtype {idx.dtype}")
+    if idx.min() < 0 or idx.max() >= n:
+        raise ValueError(f"bootstrap_indices out of range: values must be in "
+                         f"[0, {n}), got [{idx.min()}, {idx.max()}]")
+    return idx.astype(np.int64)
+
+
 def make_tree(params, seed=SEED):
     """Base learner factory with a fixed random_state."""
     return DecisionTreeClassifier(random_state=seed, **params)
@@ -30,6 +77,14 @@ class BaggingEnsemble:
 
     def __init__(self, base_params, n_estimators, seed=SEED,
                  n_classes=N_CLASSES):
+        if isinstance(n_estimators, bool) or \
+                not isinstance(n_estimators, (int, np.integer)):
+            raise ValueError(f"n_estimators must be a positive integer, got "
+                             f"{n_estimators!r} of type "
+                             f"{type(n_estimators).__name__}")
+        if n_estimators < 1:
+            raise ValueError(f"n_estimators must be a positive integer >= 1, "
+                             f"got {n_estimators}")
         self.base_params = dict(base_params)
         self.n_estimators = int(n_estimators)
         self.seed = int(seed)
@@ -40,14 +95,21 @@ class BaggingEnsemble:
         self.fit_seconds = 0.0
 
     def fit(self, X, y, bootstrap_indices=None, rng=None):
-        X, y = np.asarray(X), np.asarray(y)
+        # refitting the same object must start from a clean state
+        self.trees = []
+        self.cum_seconds = []
+        self.fit_seconds = 0.0
+        self.bootstrap_indices = None
+        self.oob_mask = None
+        X, y = _validate_training_data(X, y, self.n_classes)
         n = X.shape[0]
         if bootstrap_indices is None:
             if rng is None:
                 rng = np.random.default_rng(self.seed)
             bootstrap_indices = rng.integers(0, n,
                                              size=(self.n_estimators, n))
-        self.bootstrap_indices = np.asarray(bootstrap_indices, dtype=int)
+        self.bootstrap_indices = _validate_bootstrap_indices(
+            bootstrap_indices, self.n_estimators, n)
         self.train_X, self.train_y = X, y
 
         t0 = time.perf_counter()
@@ -69,8 +131,26 @@ class BaggingEnsemble:
         return self
 
     # -- prediction ----------------------------------------------------------
+    def _resolve_prefix(self, n_estimators):
+        """Validate an ensemble-prefix request and return the number of
+        trees to use (1..n_estimators fitted)."""
+        if not self.trees:
+            raise ValueError("bagging ensemble is not fitted yet: no "
+                             "predictions available before fit()")
+        if n_estimators is None:
+            return len(self.trees)
+        if isinstance(n_estimators, bool) or \
+                not isinstance(n_estimators, (int, np.integer)):
+            raise ValueError(f"n_estimators prefix must be an integer, got "
+                             f"{n_estimators!r}")
+        B = int(n_estimators)
+        if B < 1 or B > len(self.trees):
+            raise ValueError(f"n_estimators prefix must be in [1, "
+                             f"{len(self.trees)}] (fitted trees), got {B}")
+        return B
+
     def tree_predictions(self, X, n_estimators=None):
-        B = self.n_estimators if n_estimators is None else int(n_estimators)
+        B = self._resolve_prefix(n_estimators)
         return np.stack([t.predict(X) for t in self.trees[:B]])
 
     def vote_fractions(self, X, n_estimators=None):
@@ -91,7 +171,7 @@ class BaggingEnsemble:
         only by the trees whose bootstrap sample excluded it. Accuracy is
         measured over the examples with at least one OOB tree.
         Returns (accuracy, coverage)."""
-        B = self.n_estimators if n_estimators is None else int(n_estimators)
+        B = self._resolve_prefix(n_estimators)
         y_train = np.asarray(self.train_y if y_train is None else y_train)
         n = len(y_train)
         train_preds = np.stack([t.predict(self.train_X)
@@ -112,10 +192,10 @@ class BaggingEnsemble:
     # -- diagnostics ---------------------------------------------------------
     def distinct_bootstrap_examples(self, n_estimators=None):
         """Distinct training examples in each of the first B bootstraps."""
-        B = self.n_estimators if n_estimators is None else int(n_estimators)
+        B = self._resolve_prefix(n_estimators)
         return np.array([np.unique(self.bootstrap_indices[b]).size
                          for b in range(B)])
 
     def pairwise_disagreement(self, X, n_estimators=None):
-        B = self.n_estimators if n_estimators is None else int(n_estimators)
+        B = self._resolve_prefix(n_estimators)
         return pairwise_disagreement(self.tree_predictions(X, B))

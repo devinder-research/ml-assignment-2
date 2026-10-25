@@ -23,14 +23,18 @@ Run:  python src/q1.py
 import numpy as np
 
 from bagging import BaggingEnsemble, make_tree
-from data import (REPO, SEED, accuracy, log, load_faces, load_split,
+from data import (CFG, REPO, SEED, accuracy, log, load_faces, load_split,
                   mask_images, pairwise_disagreement, save_json,
                   tree_leaf_stats, vote_fractions, vote_margins)
 
 FIG = REPO / "figures"
 RESULTS = REPO / "results"
 
-DEPTH_RANK = {2: 2, 4: 4, 8: 8, 16: 16, None: float("inf")}
+
+def depth_rank(d):
+    """Tie-break rank for max_depth: smaller depth first; None (unlimited)
+    counts as the deepest setting."""
+    return float("inf") if d is None else float(d)
 
 
 # ---------------------------------------------------------------------------
@@ -41,10 +45,12 @@ def part_a(X, y, split, logp):
     Xtr, ytr = X[split["train"]], y[split["train"]]
     Xva, yva = X[split["val"]], y[split["val"]]
     Xte, yte = X[split["test"]], y[split["test"]]
+    depths = CFG["tree_grid"]["max_depth"]
+    leaf_sizes = CFG["tree_grid"]["min_samples_leaf"]
 
     rows = []
-    for d in [2, 4, 8, 16, None]:
-        for msl in [1, 2, 4]:
+    for d in depths:
+        for msl in leaf_sizes:
             params = {"max_depth": d, "min_samples_leaf": msl}
             model = make_tree(params).fit(Xtr, ytr)
             row = {"max_depth": d, "min_samples_leaf": msl,
@@ -60,7 +66,7 @@ def part_a(X, y, split, logp):
                  f"{row['frac_single_example_leaves']:.3f}")
 
     # highest validation accuracy; ties -> smaller depth, then larger msl
-    best = sorted(rows, key=lambda r: (-r["val_acc"], DEPTH_RANK[r["max_depth"]],
+    best = sorted(rows, key=lambda r: (-r["val_acc"], depth_rank(r["max_depth"]),
                                        -r["min_samples_leaf"]))[0]
     frozen = {"max_depth": best["max_depth"],
               "min_samples_leaf": best["min_samples_leaf"]}
@@ -81,10 +87,14 @@ def parts_b_c(X, y, split, frozen, logp):
     Xva, yva = X[split["val"]], y[split["val"]]
     Xte, yte = X[split["test"]], y[split["test"]]
     n = Xtr.shape[0]
+    B_values = CFG["bagging"]["B_values"]
+    n_max = CFG["bagging"]["n_max"]
+    assert max(B_values) <= n_max, \
+        "the sweep needs one seeded run of n_max >= max(B_values) trees"
 
-    logp("  fitting the seeded 200-tree ensemble "
-         "(default_rng(260004).integers(0, 240, (200, 240))) ...")
-    ens = BaggingEnsemble(frozen, 200, seed=SEED)
+    logp(f"  fitting the seeded {n_max}-tree ensemble "
+         f"(default_rng(260004).integers(0, 240, ({n_max}, 240))) ...")
+    ens = BaggingEnsemble(frozen, n_max, seed=SEED)
     ens.fit(Xtr, ytr)
     logp(f"  done in {ens.fit_seconds:.1f}s")
 
@@ -97,7 +107,7 @@ def parts_b_c(X, y, split, frozen, logp):
         return accuracy(yy, np.argmax(vote_fractions(preds), axis=1))
 
     sweep, diag = [], []
-    for B in [1, 5, 10, 25, 50, 100, 200]:
+    for B in B_values:
         pt, pv, pte = preds_tr[:B], preds_va[:B], preds_te[:B]
         oob_acc, oob_cov = ens.oob_accuracy(ytr, B)
         row = {"B": B,
@@ -125,7 +135,7 @@ def parts_b_c(X, y, split, frozen, logp):
     final_B = sorted(sweep, key=lambda r: (-r["val_acc"], r["B"]))[0]["B"]
     logp(f"  FINAL B* = {final_B} (highest validation accuracy, ties -> "
          f"smallest B)")
-    save_json({"B_values": [1, 5, 10, 25, 50, 100, 200], "sweep": sweep,
+    save_json({"B_values": B_values, "sweep": sweep,
                "final_B": final_B, "theory_distinct": float(theory)},
               RESULTS / "q1b_bagging_sweep.json")
     save_json({"diagnostics": diag, "final_B": final_B},

@@ -9,9 +9,12 @@ Protocol:
     size=(30, 40, 6)); resamples[r, c, :] = identity-c train indices.
   * on each resampled set we refit the selected single tree, the final
     bagged model and the selected boosting model (no re-tuning), plus
-    single trees and 100-tree bagged ensembles at depths 4 and 16 for
-    the depth study. Bagging bootstraps inside repetition r use their
-    own stream: default_rng([260004, r]).
+    single trees and 100-tree bagged ensembles at the two depth-study
+    depths from config.json (q3.depths). Because the selected depth is
+    unlimited, no configuration deeper than the selected tree exists:
+    the study compares a shallow bounded tree (4), a deep bounded tree
+    (16) and the selected unlimited tree. Bagging bootstraps inside
+    repetition r use their own stream: default_rng([260004, r]).
   * p_r(x_i): class vector on the fixed test set - predict_proba for the
     tree, vote fractions for bagging, normalised weighted vote q_k for
     boosting. Then
@@ -31,13 +34,27 @@ from joblib import Parallel, delayed
 
 from bagging import BaggingEnsemble, make_tree
 from boosting import SammeBoost
-from data import (REPO, SEED, N_CLASSES, accuracy, log, load_faces,
+from data import (CFG, REPO, SEED, N_CLASSES, accuracy, log, load_faces,
                   load_json, load_split, one_hot, save_json, vote_fractions)
 
 RESULTS = REPO / "results"
 CKPT = RESULTS / "checkpoints"
-N_REPS = 30
-DEPTH_STUDY = [("shallow", 4), ("selected", None), ("deeper", 16)]
+
+# Q3 depth study, from config.json. The roles are named so that depth 16
+# is never described as deeper than the selected tree: the selected depth
+# is unlimited (null), so a deeper configuration is unavailable and depth
+# 16 is the deeper BOUNDED comparison.
+_Q3_DEPTHS = CFG["q3"]["depths"]
+DEPTH_STUDY = [("shallow", _Q3_DEPTHS["shallow"]),
+               ("selected", _Q3_DEPTHS["selected"]),
+               ("deeper_bounded", _Q3_DEPTHS["deeper_bounded"])]
+N_REPS = CFG["q3"]["n_repetitions"]
+BAG_SIZE = CFG["q3"]["bag_size"]
+
+
+def depth_key(d):
+    """Checkpoint key prefix for a studied depth."""
+    return "sel" if d is None else f"d{d}"
 
 
 def make_resamples(split, y):
@@ -62,7 +79,7 @@ def rep_worker(r, resamples, X, y, split, frozen_msl, boost_depth,
     out = {}
     # single trees at the three depths (min_samples_leaf = frozen 4)
     for _, d in DEPTH_STUDY:
-        key = "sel" if d is None else f"d{d}"
+        key = depth_key(d)
         t = make_tree({"max_depth": d, "min_samples_leaf": frozen_msl})
         t.fit(Xr, yr)
         out[f"P_tree_{key}"] = t.predict_proba(Xte)
@@ -71,9 +88,9 @@ def rep_worker(r, resamples, X, y, split, frozen_msl, boost_depth,
 
     # 100-tree bagged ensembles at the same three depths
     for _, d in DEPTH_STUDY:
-        key = "sel" if d is None else f"d{d}"
+        key = depth_key(d)
         ens = BaggingEnsemble({"max_depth": d, "min_samples_leaf": frozen_msl},
-                              100, seed=SEED)
+                              BAG_SIZE, seed=SEED)
         ens.fit(Xr, yr, rng=np.random.default_rng([SEED, r]))
         tp = ens.tree_predictions(Xte)
         votes = vote_fractions(tp)
@@ -106,8 +123,9 @@ def aggregate(X, y, split, logp):
         with np.load(CKPT / f"q3_rep{r}.npz") as z:
             data.append({k: z[k] for k in z.files})
 
-    configs = ["tree_d4", "tree_sel", "tree_d16",
-               "bag_d4", "bag_sel", "bag_d16", "boost"]
+    configs = ([f"tree_{depth_key(d)}" for _, d in DEPTH_STUDY]
+               + [f"bag_{depth_key(d)}" for _, d in DEPTH_STUDY]
+               + ["boost"])
     stats = {}
     for name in configs:
         P = np.stack([d[f"P_{name}"] for d in data])       # (R, N, K)
@@ -122,8 +140,9 @@ def aggregate(X, y, split, logp):
         }
 
     # ---- Q3(a) ----------------------------------------------------------
-    a = {"tree": stats["tree_sel"], "bagging": stats["bag_sel"],
-         "boosting": stats["boost"]}
+    sel_key = depth_key(dict(DEPTH_STUDY)["selected"])
+    a = {"tree": stats[f"tree_{sel_key}"],
+         "bagging": stats[f"bag_{sel_key}"], "boosting": stats["boost"]}
     logp("Q3(a)  model | bias^2 | variance | test acc over the 30 refits")
     for k, v in a.items():
         logp(f"  {k:<9s} | {v['bias2']:.4f} | {v['variance']:.4f} | "
@@ -136,7 +155,7 @@ def aggregate(X, y, split, logp):
            if r["min_samples_leaf"] == 4}
     rows = []
     for role, d in DEPTH_STUDY:
-        key = "sel" if d is None else f"d{d}"
+        key = depth_key(d)
         st, sb = stats[f"tree_{key}"], stats[f"bag_{key}"]
         o = occ[str(d)]
         rows.append({
@@ -163,15 +182,17 @@ def aggregate(X, y, split, logp):
     save_json({"rows": rows}, RESULTS / "q3b_depth_study.json")
 
     # ---- Q3(c): is the deepest tree the best depth to bag? ----------------
-    # bagged accuracy on the ORIGINAL split at depths 4 and 16 (the None
-    # row comes from the Q1 sweep at B = 100)
+    # bagged accuracy on the ORIGINAL split at the two bounded depths (the
+    # unlimited-depth row comes from the Q1 sweep at B = bag_size)
     q1b = load_json(RESULTS / "q1b_bagging_sweep.json")
     Xtr, ytr = X[split["train"]], y[split["train"]]
     Xte, yte = X[split["test"]], y[split["test"]]
-    orig_bag = {None: next(r["test_acc"] for r in q1b["sweep"] if r["B"] == 100)}
-    for d in (4, 16):
+    sel_depth = dict(DEPTH_STUDY)["selected"]
+    orig_bag = {sel_depth: next(r["test_acc"] for r in q1b["sweep"]
+                                if r["B"] == BAG_SIZE)}
+    for d in [d for _, d in DEPTH_STUDY if d is not None]:
         ens = BaggingEnsemble({"max_depth": d, "min_samples_leaf": 4},
-                              100, seed=SEED)
+                              BAG_SIZE, seed=SEED)
         ens.fit(Xtr, ytr)          # same bootstrap stream as Q1
         orig_bag[d] = accuracy(yte, ens.predict(Xte))
         logp(f"  (original-split bagging at depth {d}: "
@@ -205,13 +226,13 @@ def aggregate(X, y, split, logp):
     final = {"single_tree": {
                  "clean_acc": q1d["clean"]["tree_acc"],
                  "masked_acc": q1d["masked"]["tree_acc"],
-                 "bias2": stats["tree_sel"]["bias2"],
-                 "variance": stats["tree_sel"]["variance"]},
+                 "bias2": stats[f"tree_{sel_key}"]["bias2"],
+                 "variance": stats[f"tree_{sel_key}"]["variance"]},
              "bagging": {
                  "clean_acc": q1d["clean"]["bagging_acc"],
                  "masked_acc": q1d["masked"]["bagging_acc"],
-                 "bias2": stats["bag_sel"]["bias2"],
-                 "variance": stats["bag_sel"]["variance"]},
+                 "bias2": stats[f"bag_{sel_key}"]["bias2"],
+                 "variance": stats[f"bag_{sel_key}"]["variance"]},
              "boosting": {
                  "clean_acc": q2d["boosting"]["clean_acc"],
                  "masked_acc": q2d["boosting"]["masked_acc"],
@@ -229,9 +250,14 @@ def make_figure(stats, logp):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    xs = np.arange(3)
-    labels = ["4", "16", "None"]
-    keys = ["d4", "d16", "sel"]
+    # plot order: shallow, deeper bounded, selected (unlimited) - the
+    # selected unlimited depth is plotted last, never "to the left" of a
+    # bounded depth
+    order = ["shallow", "deeper_bounded", "selected"]
+    depths_by_role = dict(DEPTH_STUDY)
+    xs = np.arange(len(order))
+    labels = [str(depths_by_role[role]) for role in order]
+    keys = [depth_key(depths_by_role[role]) for role in order]
     fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.2), constrained_layout=True)
     for ax, metric, title in zip(
             axes, ("bias2", "variance", "acc_mean"),
@@ -264,10 +290,14 @@ def main():
     boost_depth = q2b["selected"]["depth"]
     boost_rounds = q2b["selected"]["rounds"]
     final_B = load_json(RESULTS / "q1b_bagging_sweep.json")["final_B"]
-    assert final_B == 100, \
-        "the depth-study 100-tree ensemble must equal the final bagged model"
+    assert final_B == BAG_SIZE, \
+        "the depth-study bagged ensemble must equal the final bagged model"
     logp(f"frozen: min_samples_leaf={frozen_msl}, B*={final_B}, "
-         f"boosting depth {boost_depth} x {boost_rounds} rounds")
+         f"boosting depth {boost_depth} x {boost_rounds} rounds | "
+         f"depth study: "
+         + ", ".join(f"{role}={d}" for role, d in DEPTH_STUDY)
+         + " (selected depth is unlimited, so no deeper configuration "
+           "exists; 16 is the deeper bounded comparison)")
 
     CKPT.mkdir(parents=True, exist_ok=True)
     resamples = make_resamples(split, y)

@@ -28,13 +28,19 @@
     "rounds": [10, 25, 50, 100],
     "max_rounds": 100,
     "weak_learner": "DecisionTreeClassifier(max_depth=d, min_samples_leaf=1)",
-    "selection": "highest clean validation accuracy; ties -> fewer rounds, then shallower depth"
+    "selection": "highest clean validation accuracy; ties -> fewer rounds, then shallower depth",
+    "comparison_learners": [25, 50, 100]
   },
 
   "q3": {
     "n_repetitions": 30,
     "bag_size": 100,
-    "depths": { "shallow": 4, "selected": null, "deeper": 16 },
+    "depths": {
+      "shallow": 4,
+      "selected": null,
+      "deeper_bounded": 16,
+      "note": "the selected tree has unlimited depth (null), so no deeper configuration is available; depth 16 is the deeper BOUNDED comparison, deeper than the shallow tree but not deeper than the selected tree"
+    },
     "n_jobs": 2,
     "resample": "fresh default_rng(seed): g = rng.integers(0, 6, size=(30, 40, 6)); per-repetition bagging bootstraps use default_rng([seed, r])"
   }

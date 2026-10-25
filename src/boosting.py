@@ -39,13 +39,57 @@ def samme_alpha(eps, k):
     return float(np.log((1.0 - eps) / eps) + np.log(k - 1))
 
 
+def _validate_training_data(X, y, n_classes):
+    """Shared input validation for fit() (clear ValueError messages)."""
+    X, y = np.asarray(X), np.asarray(y)
+    if X.ndim != 2:
+        raise ValueError(f"X must be 2-dimensional (n_samples, n_features), "
+                         f"got shape {X.shape}")
+    if y.ndim != 1:
+        raise ValueError(f"y must be 1-dimensional, got shape {y.shape}")
+    n = X.shape[0]
+    if n == 0:
+        raise ValueError("empty dataset: X has no samples")
+    if X.shape[1] == 0:
+        raise ValueError("empty dataset: X has no features")
+    if y.shape[0] != n:
+        raise ValueError(f"X and y have mismatched sample counts: "
+                         f"X has {n}, y has {y.shape[0]}")
+    if not np.issubdtype(y.dtype, np.number):
+        raise ValueError(f"y must contain numeric class labels, got dtype "
+                         f"{y.dtype}")
+    y_int = y.astype(int)
+    if not np.array_equal(y_int, y):
+        raise ValueError("y must contain integer class labels")
+    if y_int.min() < 0 or y_int.max() >= n_classes:
+        raise ValueError(f"invalid class labels: labels must be integers in "
+                         f"[0, {n_classes}), got range "
+                         f"[{y_int.min()}, {y_int.max()}]")
+    return X, y_int
+
+
+def _validate_positive_int(value, name, minimum=1):
+    """Reject zero/negative or non-integer ensemble parameters."""
+    if isinstance(value, bool) or not isinstance(value, (int, np.integer)):
+        raise ValueError(f"{name} must be a positive integer >= {minimum}, "
+                         f"got {value!r} of type {type(value).__name__}")
+    value = int(value)
+    if value < minimum:
+        raise ValueError(f"{name} must be a positive integer >= {minimum}, "
+                         f"got {value}")
+    return value
+
+
 class SammeBoost:
     """SAMME boosting with deterministic reweighting."""
 
     def __init__(self, base_params, n_rounds, n_classes=N_CLASSES,
                  seed=SEED):
         self.base_params = dict(base_params)
-        self.n_rounds = int(n_rounds)
+        self.n_rounds = _validate_positive_int(n_rounds, "n_rounds")
+        if n_classes < 2:
+            raise ValueError(f"n_classes must be >= 2 for SAMME, got "
+                             f"{n_classes}")
         self.n_classes = int(n_classes)
         self.seed = int(seed)
         self.trees = []
@@ -61,9 +105,27 @@ class SammeBoost:
         self.cum_seconds = []     # cumulative wall-clock time after each round
         self.fit_seconds = 0.0
 
+    def _reset_state(self):
+        """Clear every fitted attribute so that refitting the same object
+        yields exactly the same model as fitting a fresh instance (repeated
+        fit() must not append to the previous run's histories)."""
+        self.trees = []
+        self.alphas = []
+        self.stop_reason = None
+        self.initial_weights = None
+        self.train_error = []
+        self.weight_history = []
+        self.train_predictions = []
+        self.max_weight = []
+        self.top10_share = []
+        self.cum_seconds = []
+        self.fit_seconds = 0.0
+
     def fit(self, X, y):
+        # refitting the same object must start from a clean state
+        self._reset_state()
         self._t0 = time.perf_counter()
-        X, y = np.asarray(X), np.asarray(y)
+        X, y = _validate_training_data(X, y, self.n_classes)
         n = X.shape[0]
         w = np.full(n, 1.0 / n)
         self.initial_weights = w.copy()
@@ -116,9 +178,29 @@ class SammeBoost:
         return w
 
     # -- inference -----------------------------------------------------------
+    def _resolve_prefix(self, n_rounds):
+        """Validate an ensemble-prefix request and return the number of
+        accepted rounds to use (1..n_rounds_run)."""
+        n_run = len(self.trees)
+        if n_run == 0:
+            raise ValueError("boosting model is not fitted yet (or the first "
+                             "weak learner was rejected): no predictions "
+                             "available before fit() accepts a learner")
+        if n_rounds is None:
+            return n_run
+        if isinstance(n_rounds, bool) or not isinstance(n_rounds,
+                                                        (int, np.integer)):
+            raise ValueError(f"n_rounds prefix must be an integer, got "
+                             f"{n_rounds!r}")
+        T = int(n_rounds)
+        if T < 1 or T > n_run:
+            raise ValueError(f"n_rounds prefix must be in [1, {n_run}] "
+                             f"(accepted learners), got {T}")
+        return T
+
     def class_scores(self, X, n_rounds=None):
         """S_k(x) = sum_t alpha_t * 1[h_t(x) = k] over the first t rounds."""
-        T = len(self.trees) if n_rounds is None else int(n_rounds)
+        T = self._resolve_prefix(n_rounds)
         S = np.zeros((np.asarray(X).shape[0], self.n_classes))
         for tree, alpha in zip(self.trees[:T], self.alphas[:T]):
             preds = tree.predict(X).astype(int)
@@ -128,10 +210,10 @@ class SammeBoost:
 
     def qk(self, X, n_rounds=None):
         """Normalised weighted vote q_k(x) = S_k(x) / sum_t alpha_t."""
-        T = len(self.trees) if n_rounds is None else int(n_rounds)
+        T = self._resolve_prefix(n_rounds)
         S = self.class_scores(X, T)
         total = float(np.sum(self.alphas[:T]))
-        if total == 0.0:                      # empty ensemble -> uniform
+        if total == 0.0:                      # defensive; cannot occur
             return np.full((S.shape[0], self.n_classes), 1.0 / self.n_classes)
         return S / total
 

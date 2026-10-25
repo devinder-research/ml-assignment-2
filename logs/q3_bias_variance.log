@@ -92,3 +92,27 @@ Q3(d)  model | clean | masked | bias^2 | variance
   bagging      | 0.8500 | 0.7000 | 0.5240 | 0.0259
   boosting     | 0.3625 | 0.2500 | 0.8824 | 0.0223
 Q3 done.
+
+===== q3_bias_variance | run start 2026-10-25 14:53:06 =====
+Q3 | seed 260004
+frozen: min_samples_leaf=4, B*=100, boosting depth 4 x 50 rounds | depth study: shallow=4, selected=None, deeper_bounded=16 (selected depth is unlimited, so no deeper configuration exists; 16 is the deeper bounded comparison)
+repetitions to run: 0/30
+Q3(a)  model | bias^2 | variance | test acc over the 30 refits
+  tree      | 0.4138 | 0.5987 | 0.4938 +- 0.0475
+  bagging   | 0.5240 | 0.0259 | 0.7467 +- 0.0390
+  boosting  | 0.8824 | 0.0223 | 0.2838 +- 0.1014
+Q3(b)  depth | tree b2/var/acc | bagged b2/var/acc | var removed
+      4 (shallow ) | 0.9022/0.0525/0.0679 | 0.8902/0.0133/0.2787 | -75%
+   None (selected) | 0.4138/0.5987/0.4938 | 0.5240/0.0259/0.7467 | -96%
+     16 (deeper_bounded) | 0.6717/0.2303/0.2746 | 0.6702/0.0215/0.6246 | -91%
+  (original-split bagging at depth 4: 0.3500)
+  (original-split bagging at depth 16: 0.7625)
+Q3(c)  depth | single -> bagged (original split) | gain
+      4 | 0.0875 -> 0.3500 | +26.2 pp (+21.1 pp over the refits)
+   None | 0.6000 -> 0.8500 | +25.0 pp (+25.3 pp over the refits)
+     16 | 0.4000 -> 0.7625 | +36.2 pp (+35.0 pp over the refits)
+Q3(d)  model | clean | masked | bias^2 | variance
+  single_tree  | 0.6000 | 0.4000 | 0.4138 | 0.5987
+  bagging      | 0.8500 | 0.7000 | 0.5240 | 0.0259
+  boosting     | 0.3625 | 0.2500 | 0.8824 | 0.0223
+Q3 done.

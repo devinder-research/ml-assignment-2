@@ -28,7 +28,7 @@
     },
     {
       "max_depth": 16,
-      "role": "deeper",
+      "role": "deeper_bounded",
       "single_orig": 0.4,
       "bagged_orig": 0.7625,
       "gain_orig_pp": 36.24999999999999,

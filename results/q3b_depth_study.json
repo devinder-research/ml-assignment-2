@@ -31,7 +31,7 @@
       "disagreement_mean": 0.8239758417508418
     },
     {
-      "role": "deeper",
+      "role": "deeper_bounded",
       "max_depth": 16,
       "tree_bias2": 0.6716916044548207,
       "tree_var": 0.2303296817770635,
